@@ -6,43 +6,133 @@
     <title>自我實現證書</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
+        font-family: 'Microsoft JhengHei', Arial, sans-serif;
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 100vh;
         margin: 0;
-        background-color: #f0f0f0;
+        background-color: #f5f7fa;
+        color: #333;
       }
+
       .container {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         text-align: center;
-        padding: 20px;
+        max-width: 90%;
+        width: 800px;
       }
+
+      h1 {
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+      }
+
       canvas {
-        border: 1px solid #ddd;
+        border: 1px solid #e0e0e0;
         max-width: 100%;
         height: auto;
+        margin-bottom: 1.5rem;
+        border-radius: 8px;
       }
-      input,
+
+      .form-group {
+        margin-bottom: 1.5rem;
+        text-align: left;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+        color: #34495e;
+      }
+
+      input[type='text'],
+      input[type='date'],
+      input[type='file'] {
+        width: 100%;
+        padding: 0.75rem 0;
+        border: 1px solid #bdc3c7;
+        border-radius: 6px;
+        font-size: 1rem;
+        text-align: center;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+
+      input[type='text']:focus,
+      input[type='date']:focus,
+      input[type='file']:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+      }
+
+      input[type='file'] {
+        padding: 0.75rem 0;
+        background-color: #f7f9fc;
+      }
+
       button {
-        margin: 10px;
-        padding: 5px 10px;
-        font-size: 16px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.1s;
+        width: 100%;
+        margin-top: 1rem;
       }
+
+      button:hover {
+        background-color: #2980b9;
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
       @media (max-width: 600px) {
-        canvas {
-          width: 100%;
-          height: auto;
+        .container {
+          padding: 1.5rem;
+        }
+
+        input[type='text'],
+        input[type='date'],
+        input[type='file'],
+        button {
+          font-size: 0.9rem;
         }
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <canvas id="certificate" width="800" height="566"></canvas><br />
-      <input type="text" id="nameInput" placeholder="輸入姓名" value="Ann W" />
-      <input type="date" id="dateInput" /><br />
-      <button id="exportButton">下載</button>
+      <h1>自我實現證書</h1>
+      <canvas id="certificate" width="800" height="566"></canvas>
+      <div class="form-group">
+        <label for="nameInput">姓名</label>
+        <input
+          type="text"
+          id="nameInput"
+          placeholder="請輸入姓名"
+          value="Ann W"
+        />
+      </div>
+      <div class="form-group">
+        <label for="dateInput">日期</label>
+        <input type="date" id="dateInput" />
+      </div>
+      <div class="form-group">
+        <label for="avatarInput">上傳頭像</label>
+        <input type="file" id="avatarInput" accept="image/*" />
+      </div>
+      <button id="exportButton">下載證書</button>
     </div>
 
     <script>
@@ -51,9 +141,10 @@
       const nameInput = document.getElementById('nameInput');
       const dateInput = document.getElementById('dateInput');
       const exportButton = document.getElementById('exportButton');
+      let avatarImage = null;
 
       // 設置預設日期為今天
-      dateInput.value = dateInput.value = getTaiwanDate();
+      dateInput.value = getTaiwanDate();
 
       // 預加載背景圖片
       const backgroundImage = new Image();
@@ -106,12 +197,43 @@
         ctx.lineTo(width * 0.7, height * 0.41);
         ctx.stroke();
 
-        // Name
+        // Name and Avatar
         ctx.font = `bold ${height * 0.07}px Microsoft JhengHei, sans-serif`;
-        ctx.fillText(name, width * 0.5, height * 0.52);
+        const avatarSize = height * 0.07; // 頭像高度與姓名一樣
+        const nameWidth = ctx.measureText(name).width;
+        const totalWidth = nameWidth + avatarSize + width * 0.02; // 加上一些間距
+        const startX = (width - totalWidth) / 2;
+        const centerY = height * 0.52;
+
+        // 繪製頭像
+        if (avatarImage) {
+          const avatarY = centerY - avatarSize / 2;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(
+            startX + avatarSize / 2,
+            centerY,
+            avatarSize / 2,
+            0,
+            Math.PI * 2,
+          );
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(avatarImage, startX, avatarY, avatarSize, avatarSize);
+          ctx.restore();
+        }
+
+        // Name
+        ctx.textAlign = 'left';
+        ctx.fillText(
+          name,
+          startX + avatarSize + width * 0.02,
+          centerY + height * 0.025,
+        );
 
         // Description
         ctx.font = `${height * 0.025}px Microsoft JhengHei, sans-serif`;
+        ctx.textAlign = 'center';
         const lines = [
           '在學習過程中展現了卓越的自我提升能力與積極溝通精神。',
           '儘管未能在規定時間內完成所有任務，但透過主動尋求改善和自我反思，',
@@ -159,10 +281,24 @@
         link.click();
       }
 
+      function handleAvatarUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            avatarImage = new Image();
+            avatarImage.onload = drawCertificate;
+            avatarImage.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
       // 事件監聽
       nameInput.addEventListener('input', drawCertificate);
       dateInput.addEventListener('input', drawCertificate);
       exportButton.addEventListener('click', exportImage);
+      avatarInput.addEventListener('change', handleAvatarUpload);
     </script>
   </body>
 </html>
